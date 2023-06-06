@@ -31,8 +31,8 @@ class Factuur {
 }
 
 //Factuur met korting, als een factuur kortingen kan bevatten overerft die van deze.
-abstract class FactuurMetKorting extends Factuur {
-    List<KortingStrategie> kortingen;
+class FactuurMetKorting extends Factuur {
+    private List<KortingStrategie> kortingen;
     //Bereken prijs (met korting). Deze methode past de strategieën toe.
     public BigDecimal berekenTotaalPrijs() {
         BigDecimal totaalPrijs = berekenPrijs();
@@ -40,6 +40,10 @@ abstract class FactuurMetKorting extends Factuur {
             totaalPrijs = korting.pasKortingStrategieToe(totaalPrijs);
         }
         return PrijsAfronden.rondPrijsAf(totaalPrijs);
+    }
+
+    public void setKortingen(List<KortingStrategie> kortingen) {
+        this.kortingen = kortingen;
     }
 }
 
@@ -72,7 +76,7 @@ class LesFactuur extends FactuurMetKorting{
     public LesFactuur(BigDecimal lesPrijs, int aantalLessen, List<KortingStrategie> kortingen) {
         super.setProductPrijs(lesPrijs);
         super.setAantal(aantalLessen);
-        this.kortingen = kortingen;
+        super.setKortingen(kortingen);
     }
 }
 
@@ -83,7 +87,7 @@ class LesPakketFactuur extends FactuurMetKorting {
 
     public LesPakketFactuur(Pakket pakket, int aantalPakketten, List<KortingStrategie> kortingen) {
         this.pakket = pakket;
-        this.kortingen = kortingen;
+        super.setKortingen(kortingen);
         super.setAantal(aantalPakketten);
         super.setProductPrijs(pakket.prijsVanPakket());
     }
