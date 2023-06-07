@@ -176,6 +176,7 @@ class Main {
         kortingen.add(new EersteAankoop());
         kortingen.add(new GroteAankoop());
         kortingen.add(new FamilieKorting());
+        kortingen.add(new VakantieKorting());
 
         // LesFactuur maken met kortingen
         BigDecimal lesPrijs = BigDecimal.valueOf(55);
@@ -190,6 +191,8 @@ class Main {
         // ExamenFactuur maken zonder extra kortingen
         int aantalExamens = 3;
         ExamenFactuur examenFactuur = new ExamenFactuur(aantalExamens, true);
+
+
 
         // Prijs berekenen inclusief kortingen
         BigDecimal lesFactuurPrijsMetKorting = lesFactuur.berekenPrijs();
