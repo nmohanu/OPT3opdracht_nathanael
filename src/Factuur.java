@@ -5,41 +5,56 @@ import java.util.ArrayList;
 
 //Klasse die verantwoordelijk is voor het afronden van de prijzen.
 class PrijsAfronden {
-    //Methode die de prijs afrondt.
     public static BigDecimal rondPrijsAf(BigDecimal price) {
         return price.setScale(2, RoundingMode.HALF_UP);
     }
 }
 
-//Factuur is verantwoordelijk voor het berekenen van de prijs. Elk factuur heeft een eigen manier van het berekenen van de prijs.
-class Factuur {
-    private int aantal;
-    private BigDecimal productPrijs;
-
-    //Bereken prijs (zonder korting)
-    public BigDecimal berekenPrijs() {
+class Calculator {
+    public static BigDecimal berekenPrijsZonderKorting(int aantal, BigDecimal productPrijs) {
         return PrijsAfronden.rondPrijsAf(productPrijs.multiply(BigDecimal.valueOf(aantal)));
     }
-    //setters
-    public void setAantal(int aantal) {
-        this.aantal = aantal;
-    }
-    public void setProductPrijs(BigDecimal productPrijs) {
-        this.productPrijs = productPrijs;
-    }
 
-}
-
-//Factuur met korting, als een factuur kortingen kan bevatten overerft die van deze.
-class FactuurMetKorting extends Factuur {
-    private List<KortingStrategie> kortingen;
-    //Bereken prijs (met korting). Deze methode past de strategieën toe.
-    public BigDecimal berekenTotaalPrijs() {
-        BigDecimal totaalPrijs = berekenPrijs();
+    public static BigDecimal pasKortingenToe(BigDecimal prijs, List<KortingStrategie> kortingen) {
+        BigDecimal totaalPrijs = prijs;
         for (KortingStrategie korting : kortingen) {
             totaalPrijs = korting.pasKortingStrategieToe(totaalPrijs);
         }
         return PrijsAfronden.rondPrijsAf(totaalPrijs);
+    }
+
+    public static BigDecimal berekenPrijsNaKorting(BigDecimal prijs, BigDecimal kortingPercentage) {
+        BigDecimal korting = prijs.multiply(kortingPercentage.divide(BigDecimal.valueOf(100)));
+        return prijs.subtract(korting);
+    }
+
+
+}
+
+class Factuur {
+    private int aantal;
+    private BigDecimal productPrijs;
+
+    public BigDecimal berekenPrijs() {
+        return Calculator.berekenPrijsZonderKorting(aantal, productPrijs);
+    }
+
+    public void setAantal(int aantal) {
+        this.aantal = aantal;
+    }
+
+    public void setProductPrijs(BigDecimal productPrijs) {
+        this.productPrijs = productPrijs;
+    }
+}
+
+class FactuurMetKorting extends Factuur {
+    private List<KortingStrategie> kortingen;
+
+    @Override
+    public BigDecimal berekenPrijs() {
+        BigDecimal prijs = super.berekenPrijs();
+        return Calculator.pasKortingenToe(prijs, kortingen);
     }
 
     public void setKortingen(List<KortingStrategie> kortingen) {
@@ -49,7 +64,6 @@ class FactuurMetKorting extends Factuur {
 
 //Examen facturen hebben geen kortingen. Alleen een lager tarief indien het rustig is (korte wachttijd).
 class ExamenFactuur extends Factuur {
-    String productNaam = "Examen";
     private final BigDecimal EXAMEN_PRIJS = BigDecimal.valueOf(150.0);
     //Toeslag indien lange wachttijd (isDruk)
     private final int TOESLAG_IN_PROCENTEN = 10;
@@ -72,22 +86,21 @@ class ExamenFactuur extends Factuur {
 }
 //Factuur voor losse lessen
 class LesFactuur extends FactuurMetKorting{
-    String productNaam = "Losse lessen";
+
     public LesFactuur(BigDecimal lesPrijs, int aantalLessen, List<KortingStrategie> kortingen) {
         super.setProductPrijs(lesPrijs);
         super.setAantal(aantalLessen);
-        super.setKortingen(kortingen);
+        this.setKortingen(kortingen);
     }
 }
 
 //
 class LesPakketFactuur extends FactuurMetKorting {
-    String productNaam = "Les pakket";
     private final Pakket pakket;
 
     public LesPakketFactuur(Pakket pakket, int aantalPakketten, List<KortingStrategie> kortingen) {
         this.pakket = pakket;
-        super.setKortingen(kortingen);
+        this.setKortingen(kortingen);
         super.setAantal(aantalPakketten);
         super.setProductPrijs(pakket.prijsVanPakket());
     }
@@ -96,7 +109,7 @@ class LesPakketFactuur extends FactuurMetKorting {
 //Pakket, hier kunnen standaard pakketten van gemaakt worden.
 class Pakket {
     private int aantalLessen;
-    private static final BigDecimal LES_PRIJS = BigDecimal.valueOf(55);
+    private final BigDecimal LES_PRIJS = BigDecimal.valueOf(55.0);
 
     public Pakket(int aantalLessen) {
         this.aantalLessen = aantalLessen;
@@ -113,59 +126,51 @@ interface KortingStrategie {
     //Instanties kunnen een eigen implementatie hebben, bijvoorbeeld GroteAankoop, deze kijkt eerst naar
     //Bepaalde voorwaarden en bepaalt dan wat er gebeurt.
     BigDecimal pasKortingStrategieToe(BigDecimal prijs);
-    //Methodes die korting daadwerkelijk toepast en de nieuwe prijs berekent.
-    //Deze methode wordt altijd gebruikt om korting te verrekenen omdat deze altijd prijs en percentage
-    //gebruiken als parameters en op dezelfde manier berekent worden.
-    default BigDecimal berekenPrijsNaKorting(BigDecimal prijs, BigDecimal kortingPercentage) {
-        BigDecimal korting = prijs.multiply(kortingPercentage.divide(BigDecimal.valueOf(100)));
-        return prijs.subtract(korting);
-    }
+
 }
 
 class EersteAankoop implements KortingStrategie {
-    private static final BigDecimal KORTING_IN_PROCENTEN = BigDecimal.valueOf(3);
+    private final BigDecimal KORTING_IN_PROCENTEN = BigDecimal.valueOf(3);
 
     @Override
     public BigDecimal pasKortingStrategieToe(BigDecimal prijs) {
-        return berekenPrijsNaKorting(prijs, KORTING_IN_PROCENTEN);
+        return Calculator.berekenPrijsNaKorting(prijs, KORTING_IN_PROCENTEN);
     }
 }
 
 class GroteAankoop implements KortingStrategie {
-    private static final BigDecimal KORTING_IN_PROCENTEN = BigDecimal.valueOf(5);
-    private static final BigDecimal KORTING_VANAF_PRIJS = BigDecimal.valueOf(500);
+    private final BigDecimal KORTING_IN_PROCENTEN = BigDecimal.valueOf(5);
+    private final BigDecimal KORTING_VANAF_PRIJS = BigDecimal.valueOf(500);
 
     //Alleen korting verrekenen als aankoop groter is dan of gelijk is aan 500.
     @Override
     public BigDecimal pasKortingStrategieToe(BigDecimal prijs) {
         if (prijs.compareTo(KORTING_VANAF_PRIJS) >= 0) {
-            return berekenPrijsNaKorting(prijs, KORTING_IN_PROCENTEN);
+            return Calculator.berekenPrijsNaKorting(prijs, KORTING_IN_PROCENTEN);
         }
         return prijs;
     }
 }
 
 class VakantieKorting implements KortingStrategie {
-    private static final BigDecimal KORTING_IN_PROCENTEN = BigDecimal.valueOf(10);
+    private final BigDecimal KORTING_IN_PROCENTEN = BigDecimal.valueOf(10);
 
     @Override
     public BigDecimal pasKortingStrategieToe(BigDecimal prijs) {
-        return berekenPrijsNaKorting(prijs, KORTING_IN_PROCENTEN);
+        return Calculator.berekenPrijsNaKorting(prijs, KORTING_IN_PROCENTEN);
     }
 }
 
 class FamilieKorting implements KortingStrategie {
-    private static final BigDecimal KORTING_IN_PROCENTEN = BigDecimal.valueOf(15);
+    private final BigDecimal KORTING_IN_PROCENTEN = BigDecimal.valueOf(15);
 
     @Override
     public BigDecimal pasKortingStrategieToe(BigDecimal prijs) {
-        return berekenPrijsNaKorting(prijs, KORTING_IN_PROCENTEN);
+        return Calculator.berekenPrijsNaKorting(prijs, KORTING_IN_PROCENTEN);
     }
 }
-
-
 class Main {
-    public static void main(String[] args) {
+    public void main(String[] args) {
         // Kortingen configureren
         List<KortingStrategie> kortingen = new ArrayList<>();
         kortingen.add(new EersteAankoop());
@@ -187,8 +192,8 @@ class Main {
         ExamenFactuur examenFactuur = new ExamenFactuur(aantalExamens, true);
 
         // Prijs berekenen inclusief kortingen
-        BigDecimal lesFactuurPrijsMetKorting = lesFactuur.berekenTotaalPrijs();
-        BigDecimal pakketFactuurPrijsMetKorting = pakketFactuur.berekenTotaalPrijs();
+        BigDecimal lesFactuurPrijsMetKorting = lesFactuur.berekenPrijs();
+        BigDecimal pakketFactuurPrijsMetKorting = pakketFactuur.berekenPrijs();
 
         // Prijs berekenen zonder kortingen
         BigDecimal lesFactuurPrijsZonderKorting = lesFactuur.berekenPrijs();
