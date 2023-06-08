@@ -36,8 +36,8 @@ class Factuur {
     private BigDecimal productPrijs;
 
     public BigDecimal berekenPrijs() {
-        Calculator c = new Calculator();
-        return c.berekenPrijsZonderKorting(aantal, productPrijs);
+
+        return Calculator.berekenPrijsZonderKorting(aantal, productPrijs);
     }
 
     public void setAantal(int aantal) {
