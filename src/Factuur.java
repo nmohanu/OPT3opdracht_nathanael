@@ -15,6 +15,13 @@ class Calculator {
         return PrijsAfronden.rondPrijsAf(productPrijs.multiply(BigDecimal.valueOf(aantal)));
     }
 
+    public static BigDecimal berekenPrijsNaKorting(BigDecimal prijs, BigDecimal kortingPercentage) {
+        BigDecimal korting = prijs.multiply(kortingPercentage.divide(BigDecimal.valueOf(100)));
+        return prijs.subtract(korting);
+    }
+}
+
+class KortingUtility {
     public static BigDecimal pasKortingenToe(BigDecimal prijs, List<KortingStrategie> kortingen) {
         BigDecimal totaalPrijs = prijs;
         for (KortingStrategie korting : kortingen) {
@@ -22,13 +29,6 @@ class Calculator {
         }
         return PrijsAfronden.rondPrijsAf(totaalPrijs);
     }
-
-    public static BigDecimal berekenPrijsNaKorting(BigDecimal prijs, BigDecimal kortingPercentage) {
-        BigDecimal korting = prijs.multiply(kortingPercentage.divide(BigDecimal.valueOf(100)));
-        return prijs.subtract(korting);
-    }
-
-
 }
 
 class Factuur {
@@ -36,7 +36,8 @@ class Factuur {
     private BigDecimal productPrijs;
 
     public BigDecimal berekenPrijs() {
-        return Calculator.berekenPrijsZonderKorting(aantal, productPrijs);
+        Calculator c = new Calculator();
+        return c.berekenPrijsZonderKorting(aantal, productPrijs);
     }
 
     public void setAantal(int aantal) {
@@ -54,7 +55,7 @@ class FactuurMetKorting extends Factuur {
     @Override
     public BigDecimal berekenPrijs() {
         BigDecimal prijs = super.berekenPrijs();
-        return Calculator.pasKortingenToe(prijs, kortingen);
+        return KortingUtility.pasKortingenToe(prijs, kortingen);
     }
 
     public void setKortingen(List<KortingStrategie> kortingen) {
