@@ -10,6 +10,7 @@ class PrijsAfronden {
     }
 }
 
+//Klasse die verantwoordelijk is voor de berekeningen
 class Calculator {
     public static BigDecimal berekenPrijsZonderKorting(int aantal, BigDecimal productPrijs) {
         return PrijsAfronden.rondPrijsAf(productPrijs.multiply(BigDecimal.valueOf(aantal)));
@@ -20,7 +21,7 @@ class Calculator {
         return prijs.subtract(korting);
     }
 }
-
+// Klasse die verantwoordelijk is voor het toepassen van de korting strategieën
 class KortingUtility {
     public static BigDecimal pasKortingenToe(BigDecimal prijs, List<KortingStrategie> kortingen) {
         BigDecimal totaalPrijs = prijs;
@@ -31,6 +32,7 @@ class KortingUtility {
     }
 }
 
+// Algemene uitlijning voor facturen
 class Factuur {
     private int aantal;
     private BigDecimal productPrijs;
@@ -49,6 +51,7 @@ class Factuur {
     }
 }
 
+// Klasse extend deze klasse indien de facturen in aanmerking komen voor kortingen.
 class FactuurMetKorting extends Factuur {
     private List<KortingStrategie> kortingen;
 
@@ -80,7 +83,7 @@ class ExamenFactuur extends Factuur {
     @Override
     public BigDecimal berekenPrijs() {
         if (isDruk) {
-            return PrijsAfronden.rondPrijsAf(EXAMEN_PRIJS.multiply(BigDecimal.valueOf(1 + TOESLAG_IN_PROCENTEN/100).multiply(BigDecimal.valueOf(aantal))));
+            return PrijsAfronden.rondPrijsAf(EXAMEN_PRIJS.multiply(BigDecimal.valueOf(1.0 + (double) TOESLAG_IN_PROCENTEN /100).multiply(BigDecimal.valueOf(aantal))));
         }
         return PrijsAfronden.rondPrijsAf(EXAMEN_PRIJS.multiply(BigDecimal.valueOf(aantal)));
     }
@@ -95,7 +98,7 @@ class LesFactuur extends FactuurMetKorting{
     }
 }
 
-//
+
 class LesPakketFactuur extends FactuurMetKorting {
     private final Pakket pakket;
 
@@ -151,6 +154,7 @@ class GroteAankoop implements KortingStrategie {
         }
         return prijs;
     }
+
 }
 
 class VakantieKorting implements KortingStrategie {
@@ -179,7 +183,7 @@ class Main {
         kortingen.add(new FamilieKorting());
         kortingen.add(new VakantieKorting());
 
-        // LesFactuur maken met kortingen
+        // Les factuur maken met kortingen
         BigDecimal lesPrijs = BigDecimal.valueOf(55);
         int aantalLessen = 10;
         LesFactuur lesFactuur = new LesFactuur(lesPrijs, aantalLessen, kortingen);
@@ -189,7 +193,7 @@ class Main {
         Pakket pakket = new Pakket(10);
         LesPakketFactuur pakketFactuur = new LesPakketFactuur(pakket, aantalPakketten, kortingen);
 
-        // ExamenFactuur maken zonder extra kortingen
+        // Examen factuur maken zonder extra kortingen
         int aantalExamens = 3;
         ExamenFactuur examenFactuur = new ExamenFactuur(aantalExamens, true);
 
