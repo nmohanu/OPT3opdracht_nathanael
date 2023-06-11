@@ -90,7 +90,6 @@ class ExamenFactuur extends Factuur {
 }
 //Factuur voor losse lessen
 class LesFactuur extends FactuurMetKorting{
-
     public LesFactuur(BigDecimal lesPrijs, int aantalLessen, List<KortingStrategie> kortingen) {
         super.setProductPrijs(lesPrijs);
         super.setAantal(aantalLessen);
@@ -175,7 +174,7 @@ class FamilieKorting implements KortingStrategie {
     }
 }
 class Main {
-    public void main(String[] args) {
+    public static void main(String[] args) {
         // Kortingen configureren
         List<KortingStrategie> kortingen = new ArrayList<>();
         kortingen.add(new EersteAankoop());
@@ -197,15 +196,16 @@ class Main {
         int aantalExamens = 3;
         ExamenFactuur examenFactuur = new ExamenFactuur(aantalExamens, true);
 
-
-
         // Prijs berekenen inclusief kortingen
         BigDecimal lesFactuurPrijsMetKorting = lesFactuur.berekenPrijs();
         BigDecimal pakketFactuurPrijsMetKorting = pakketFactuur.berekenPrijs();
 
         // Prijs berekenen zonder kortingen
-        BigDecimal lesFactuurPrijsZonderKorting = lesFactuur.berekenPrijs();
-        BigDecimal pakketFactuurPrijsZonderKorting = pakketFactuur.berekenPrijs();
+        LesFactuur lesFactuurZonderKortingen = new LesFactuur(lesPrijs, aantalLessen, new ArrayList<>());
+        LesPakketFactuur pakketFactuurZonderKorting = new LesPakketFactuur(pakket, aantalPakketten, new ArrayList<>());
+
+        BigDecimal lesFactuurPrijsZonderKorting = lesFactuurZonderKortingen.berekenPrijs();
+        BigDecimal pakketFactuurPrijsZonderKorting = pakketFactuurZonderKorting.berekenPrijs();
         BigDecimal examenFactuurPrijsZonderKorting = examenFactuur.berekenPrijs();
 
         // Resultaten weergeven
@@ -215,4 +215,5 @@ class Main {
         System.out.println("Pakketfactuur prijs met korting: " + pakketFactuurPrijsMetKorting);
         System.out.println("Examenfactuur prijs: " + examenFactuurPrijsZonderKorting);
     }
+
 }
